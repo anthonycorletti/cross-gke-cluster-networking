@@ -1,0 +1,33 @@
+#!/bin/bash
+
+gcloud compute routes delete c1-service-route -q
+gcloud compute routes delete c2-service-route -q
+
+gcloud compute forwarding-rules delete c2-forwarding-rules --region us-west1 -q
+gcloud compute backend-services delete c2-backend-services --region us-west1 -q
+
+gcloud compute backend-services delete c1-backend-services -q
+gcloud compute forwarding-rules delete c1-forwarding-rules -q
+
+gcloud compute instance-groups unmanaged delete c1-gw-instance-group --zone us-west1-a -q
+gcloud compute instance-groups unmanaged delete c2-gw-instance-group --zone us-west1-b -q
+
+gcloud compute health-checks delete tcp ingress-controller-health-check -q
+
+gcloud alpha compute instances delete c2-gw-1 c2-gw-2 --zone us-west1-b -q
+gcloud alpha compute instances delete c1-gw-1 c1-gw-2 --zone us-west1-a -q
+
+rm c1-kubeconfig c2-kubeconfig
+
+gcloud container clusters delete c1 --zone us-west1-a -q
+gcloud container clusters delete c2 --zone us-west1-b -q
+
+for network in shared cluster-1 cluster-2; do
+  gcloud compute firewall-rules delete "${network}-allow-all" -q
+done
+
+gcloud compute networks subnets delete services -q
+
+for network in shared cluster-1 cluster-2; do
+  gcloud compute networks delete ${network} -q
+done
